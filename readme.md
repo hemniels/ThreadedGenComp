@@ -22,18 +22,18 @@ Genome sequencing is a method used to determine the complete DNA sequence of an 
 ## Folder Structure
 The project is organized into the following directories and files:
 
-project_root/
-├── include/
-│ └── main.h
-├── search/
-│ ├── sequence.c
-│ ├── sequence.h
-│ ├── search.h
-│ └── search.c
-├── threading/
-│ ├── scheduler.c
-│ └── scheduler.h
-└── main.c
+project_root/  
+├── include/  
+│ └── main.h  
+├── search/  
+│ ├── sequence.c  
+│ ├── sequence.h  
+│ ├── search.h  
+│ └── search.c  
+├── threading/  
+│ ├── scheduler.c  
+│ └── scheduler.h  
+└── main.c  
 
 
 - **include/main.h**: Header file for the main program.
