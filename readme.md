@@ -8,6 +8,7 @@ This project is a multicore implementation of genome sequencing. It utilizes mul
 - [Folder Structure](#folder-structure)
 - [Installation](#installation)
 - [Usage](#usage)
+- [Testing](#testing)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -33,8 +34,14 @@ project_root/
 ├── threading/  
 │ ├── scheduler.c  
 │ └── scheduler.h  
+├── tests/  
+│ ├── random_sequences_1.txt  
+│ ├── random_sequences_2.txt  
+│ ├── test_dataloader.c  
+│ └── seqgen.py  
+├── dataloader.c  
+├── dataloader.h  
 └── main.c  
-
 
 - **include/main.h**: Header file for the main program.
 - **search/sequence.c**: Implementation of sequence handling functions.
@@ -43,4 +50,10 @@ project_root/
 - **search/search.c**: Implementation of search functions.
 - **threading/scheduler.c**: Implementation of the task scheduler.
 - **threading/scheduler.h**: Header file for the task scheduler.
+- **tests/random_sequences_1.txt**: First set of random test sequences.
+- **tests/random_sequences_2.txt**: Second set of random test sequences.
+- **tests/test_dataloader.c**: Test file for the dataloader.
+- **tests/seqgen.py**: Python script to generate random test sequences.
+- **dataloader.c**: Implementation of the data loader.
+- **dataloader.h**: Header file for the data loader.
 - **main.c**: Main program file.
