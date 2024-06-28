@@ -3,67 +3,86 @@
 #include <string.h>
 #include "dataloader.h"
 
-#define BUFFER_SIZE 4096
+void init_sequence_list(SequenceList* list, int initial_capacity) {
+    list->sequences = (char**)malloc(initial_capacity * sizeof(char*));
+    list->count = 0;
+    list->capacity = initial_capacity;
+}
 
-int load_fasta_file(const char *file_path, Sequence **sequences, int *seq_count) {
-    FILE *file = fopen(file_path, "r");
+void expand_sequence_list(SequenceList* list) {
+    int new_capacity = list->capacity * 2;
+    list->sequences = (char**)realloc(list->sequences, new_capacity * sizeof(char*));
+    list->capacity = new_capacity;
+}
+
+void add_sequence(SequenceList* list, const char* sequence) {
+    if (list->count == list->capacity) {
+        expand_sequence_list(list);
+    }
+    list->sequences[list->count] = strdup(sequence);
+    list->count++;
+}
+
+void load_sequences(const char* filename, SequenceList* list) {
+    FILE* file = fopen(filename, "rb");
     if (!file) {
         perror("Fehler beim Öffnen der Datei");
-        return -1;
+        exit(EXIT_FAILURE);
     }
 
-    char *buffer = malloc(BUFFER_SIZE);
-    char *current_seq = malloc(BUFFER_SIZE * 10);  // Platz für eine längere Sequenz
-    size_t current_seq_len = 0;
-    Sequence *seq_array = malloc(sizeof(Sequence) * 100);  // Startgröße
-    int count = 0;
-    int header = 1; // Flag to identify header lines
-    char *buffer_end = buffer + BUFFER_SIZE;
-    char *start, *end;
+    // Dateigröße ermitteln
+    fseek(file, 0, SEEK_END);
+    long file_size = ftell(file);
+    fseek(file, 0, SEEK_SET);
 
-    while (1) {
-        size_t bytes_read = fread(buffer, 1, BUFFER_SIZE, file);
-        if (bytes_read == 0) break;
+    // Dateiinhalt in einen Puffer lesen
+    char* buffer = (char*)malloc(file_size + 1);
+    if (!buffer) {
+        perror("Fehler beim Allozieren des Puffers");
+        exit(EXIT_FAILURE);
+    }
+    fread(buffer, 1, file_size, file);
+    buffer[file_size] = '\0';  // Nullterminator hinzufügen
 
-        start = buffer;
-        end = buffer;
+    fclose(file);
 
-        while (end < buffer + bytes_read) {
-            if (*end == '>') {
-                if (header == 0 && current_seq_len > 0) {
-                    // Aktuelle Sequenz speichern
-                    seq_array[count - 1].sequence = strndup(current_seq, current_seq_len);
-                    current_seq_len = 0;
-                }
-                // Neue Sequenz starten
-                start = end + 1;
-                while (*end != '\n' && end < buffer + bytes_read) end++;
-                seq_array[count].id = strndup(start, end - start);
-                count++;
-                header = 1;
-                if (count % 100 == 0) {
-                    seq_array = realloc(seq_array, sizeof(Sequence) * (count + 100));
-                }
-            } else if (*end != '\n' && *end != '\r') {
-                current_seq[current_seq_len++] = *end;
-                header = 0;
-            }
-            end++;
+    // Sequenzen parsen
+    char* line = buffer;
+    char sequence[MAX_LINE_LENGTH * 10] = "";  // Annahme: eine Sequenz kann mehrere Zeilen umfassen
+    int sequence_length = 0;
+
+    while (*line) {
+        char* next_line = strchr(line, '\n');
+        if (next_line) {
+            *next_line = '\0';
+            next_line++;
         }
 
-        // Restliche Pufferinhalte für den nächsten Durchlauf aufbewahren
-        size_t remaining = buffer + bytes_read - start;
-        memmove(buffer, start, remaining);
+        if (line[0] == '>') {  // Header-Zeile
+            if (sequence_length > 0) {
+                add_sequence(list, sequence);
+                sequence[0] = '\0';
+                sequence_length = 0;
+            }
+        } else {  // Sequenz-Zeile
+            strcat(sequence, line);
+            sequence_length += strlen(line);
+        }
+
+        line = next_line;
     }
 
-    if (current_seq_len > 0) {
-        seq_array[count - 1].sequence = strndup(current_seq, current_seq_len);
+    // Letzte Sequenz hinzufügen
+    if (sequence_length > 0) {
+        add_sequence(list, sequence);
     }
 
     free(buffer);
-    free(current_seq);
-    fclose(file);
-    *sequences = seq_array;
-    *seq_count = count;
-    return 0;
+}
+
+void free_sequence_list(SequenceList* list) {
+    for (int i = 0; i < list->count; i++) {
+        free(list->sequences[i]);
+    }
+    free(list->sequences);
 }
